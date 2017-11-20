@@ -1,5 +1,3 @@
-<p align="center"><a href="https://godoc.org/github.com/volatile/core"><img src="http://volatile.whitedevops.com/images/repositories/core/logo.png" alt="core" title="core"></a><br><br></p>
+#api框架，使用反射实现自动路由
 
-Package core provides a pure handlers (or middlewares) stack so you can perform actions downstream, then filter and manipulate the response upstream.
-
-[![GoDoc](https://godoc.org/github.com/volatile/core?status.svg)](https://godoc.org/github.com/volatile/core)
+支持koa风格的中间件
