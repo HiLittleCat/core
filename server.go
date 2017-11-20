@@ -2,8 +2,8 @@ package core
 
 import (
 	"flag"
-	"net/http"
-	"time"
+
+	"github.com/astaxie/beego/grace"
 )
 
 var (
@@ -34,13 +34,5 @@ func Run() error {
 	}
 
 	// set server
-	srv := &http.Server{
-		Addr:           Address,
-		Handler:        defaultHandlersStack,
-		ReadTimeout:    5 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		IdleTimeout:    120 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
-	panic(srv.ListenAndServe())
+	panic(grace.ListenAndServe(Address, defaultHandlersStack))
 }
