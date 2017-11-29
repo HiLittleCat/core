@@ -2,6 +2,7 @@ package core
 
 import (
 	"flag"
+	"time"
 
 	"github.com/astaxie/beego/grace"
 )
@@ -28,11 +29,19 @@ func BeforeRun(f func()) {
 }
 
 // Run starts the server for listening and serving.
-func Run() error {
+func Run() {
 	for _, f := range beforeRun {
 		f()
 	}
 
 	// set server
+	grace.DefaultReadTimeOut = 10 * time.Second
+	// DefaultWriteTimeOut is the HTTP Write timeout
+	grace.DefaultWriteTimeOut = 10 * time.Second
+	// DefaultMaxHeaderBytes is the Max HTTP Herder size, default is 0, no limit
+	grace.DefaultMaxHeaderBytes = 0
+	// DefaultTimeout is the shutdown server's timeout. default is 60s
+
 	panic(grace.ListenAndServe(Address, defaultHandlersStack))
+
 }
