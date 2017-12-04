@@ -2,9 +2,16 @@ package core
 
 import (
 	"flag"
+	"fmt"
+	"net"
+	"net/http"
+
+	log "github.com/sirupsen/logrus"
+
+	"os"
 	"time"
 
-	"github.com/astaxie/beego/grace"
+	"gopkg.in/tylerb/graceful.v1"
 )
 
 var (
@@ -16,6 +23,18 @@ var (
 
 	// beforeRun stores a set of functions that are triggered just before running the server.
 	beforeRun []func()
+
+	// Maximum duration for reading the full request (including body); ns|µs|ms|s|m|h
+	ReadTimeout time.Duration
+
+	// Maximum duration for writing the full response (including body); ns|µs|ms|s|m|h
+	WriteTimeout time.Duration
+
+	// Maximum size of memory that can be used when receiving uploaded files
+	MultipartMaxmemoryMb int
+
+	//Max HTTP Herder size, default is 0, no limit
+	MaxHeaderBytes int
 )
 
 func init() {
@@ -34,14 +53,27 @@ func Run() {
 		f()
 	}
 
-	// set server
-	grace.DefaultReadTimeOut = 10 * time.Second
-	// DefaultWriteTimeOut is the HTTP Write timeout
-	grace.DefaultWriteTimeOut = 10 * time.Second
-	// DefaultMaxHeaderBytes is the Max HTTP Herder size, default is 0, no limit
-	grace.DefaultMaxHeaderBytes = 0
-	// DefaultTimeout is the shutdown server's timeout. default is 60s
+	log.Println(fmt.Sprintf("Serving %s with pid %d.", Address, os.Getpid()))
 
-	panic(grace.ListenAndServe(Address, defaultHandlersStack))
+	srv := &graceful.Server{
+		Timeout: 10 * time.Second,
+
+		ConnState: func(conn net.Conn, state http.ConnState) {
+			// conn has a new state
+		},
+
+		Server: &http.Server{
+			Addr:    Address,
+			Handler: defaultHandlersStack,
+		},
+	}
+
+	err := srv.ListenAndServe()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println("Server stoped.")
 
 }
