@@ -49,13 +49,17 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		index:         -1, // Begin with -1 because Next will increment the index before calling the first handler.
 		handlersStack: hs,
 	}
-	c.ResponseWriter = contextWriter{w, c} // Use a binder to set the context's written flag on the first write.
+	// Use a binder to set the context's written flag on the first write.
+	c.ResponseWriter = contextWriter{w, c}
+	//register auto controller
 	c.handlersStack.Use(controller)
 	// Set some "good practice" default headers.
 	c.ResponseWriter.Header().Set("Cache-Control", "no-cache")
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")
 	c.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 
-	defer c.Recover() // Always recover form panics.
-	c.Next()          // Enter the handlers stack.
+	// Always recover form panics.
+	defer c.Recover()
+	// Enter the handlers stack.
+	c.Next()
 }
