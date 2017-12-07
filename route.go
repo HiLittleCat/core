@@ -11,13 +11,11 @@ type IController interface {
 }
 
 type Controller struct {
-	Ctx  *Context
-	Data map[string]interface{}
+	Ctx *Context
 }
 
 func (controller *Controller) Init(ctx *Context) {
 	controller.Ctx = ctx
-	controller.Data = make(map[string]interface{})
 }
 
 var mRoutering map[string]reflect.Type = make(map[string]reflect.Type)
