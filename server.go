@@ -1,7 +1,6 @@
 package core
 
 import (
-	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -37,9 +36,18 @@ var (
 	MaxHeaderBytes int
 )
 
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
 func init() {
-	flag.BoolVar(&Production, "production", Production, "run the server in production environment")
-	flag.StringVar(&Address, "address", Address, "the address to listen and serving on")
 }
 
 // BeforeRun adds a function that will be triggered just before running the server.

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/volatile/core"
+	"github.com/HiLittleCat/core"
 )
 
 // responseWriterBinder represents a binder that catches a downstream response writing and transfer its content to a writer (that will normally take care to use the original ResponseWriter).

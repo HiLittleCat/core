@@ -18,9 +18,11 @@ func (controller *Controller) Init(ctx *Context) {
 	controller.Ctx = ctx
 }
 
+var openAutoController = false
 var mRoutering map[string]reflect.Type = make(map[string]reflect.Type)
 
 func AutoController(controller IController) {
+	openAutoController = true
 	refV := reflect.ValueOf(controller)
 	refT := reflect.Indirect(refV).Type()
 	refName := strings.ToLower(refT.Name())

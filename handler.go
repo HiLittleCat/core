@@ -52,7 +52,9 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Use a binder to set the context's written flag on the first write.
 	c.ResponseWriter = contextWriter{w, c}
 	//register auto controller
-	c.handlersStack.Use(controller)
+	if openAutoController == true {
+		c.handlersStack.Use(controller)
+	}
 	// Set some "good practice" default headers.
 	c.ResponseWriter.Header().Set("Cache-Control", "no-cache")
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")

@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/volatile/core"
+	"github.com/HiLittleCat/core"
 )
 
 func TestResponseWriterBinder(t *testing.T) {

@@ -89,27 +89,27 @@ That's why you have to import all and only the handlers or helpers you need:
 
 	compress
 		Clever response compressing
-		https://godoc.org/github.com/volatile/compress
+		github.com/HiLittleCat/compress
 	cors
 		Cross-Origin Resource Sharing support
-		https://godoc.org/github.com/volatile/cors
+		https://godoc.org/github.com/HiLittleCat/cors
 	i18n
 		Simple internationalization
-		https://godoc.org/github.com/volatile/i18n
+		https://godoc.org/github.com/HiLittleCat/i18n
 	log
 		Requests logging
-		https://godoc.org/github.com/volatile/log
+		https://godoc.org/github.com/HiLittleCat/log
 	response
 		Readable response helper
-		https://godoc.org/github.com/volatile/response
+		https://godoc.org/github.com/HiLittleCat/response
 	route
 		Flexible routing helper
-		https://godoc.org/github.com/volatile/route
+		https://godoc.org/github.com/HiLittleCat/route
 	secure
 		Quick security wins
-		https://godoc.org/github.com/volatile/secure
+		https://godoc.org/github.com/HiLittleCat/secure
 	static
 		Simple assets serving
-		https://godoc.org/github.com/volatile/static
+		https://godoc.org/github.com/HiLittleCat/static
 */
 package core
