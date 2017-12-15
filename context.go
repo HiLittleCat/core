@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"net/http"
-	"net/url"
 	"runtime"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/json-iterator/go"
 )
@@ -21,33 +20,48 @@ type Context struct {
 	Request        *http.Request
 	Data           map[string]interface{}
 	ResData        interface{}
-	queryParams    url.Values // URL query string values
 	Session        map[string]interface{}
 	index          int            // Keeps the actual handler index.
 	handlersStack  *HandlersStack // Keeps the reference to the actual handlers stack.
 	written        bool           // A flag to know if the response has been written.
 }
 
-// QueryParam gets the first query value associated with the given key.
-// If there are no values associated with the key, QueryParam returns
-// the empty string.
-func (ctx *Context) QueryParam(key string) string {
-	if ctx.queryParams == nil {
-		ctx.queryParams = ctx.Request.URL.Query()
-	}
-	return ctx.queryParams.Get(key)
+type resOk struct {
+	Ok   bool
+	Data interface{}
 }
 
-// Response json, default status is 200
-func (ctx *Context) JSON(data interface{}) (int, error) {
+type resFail struct {
+	Ok      bool
+	Message string
+}
+
+// Response json
+func (ctx *Context) Success(status int, data interface{}) (int, error) {
+	if ctx.written == true {
+		return 0, errors.New("Context.Success: request has been writed")
+	}
+	ctx.written = true
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	b, _ := json.Marshal(&resOk{Ok: true, Data: data})
+	ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
+	ctx.ResponseWriter.WriteHeader(status)
+	return ctx.ResponseWriter.Write(b)
+}
+
+// Response fail
+func (ctx *Context) Fail(status int, message string, err ...error) (int, error) {
 	if ctx.written == true {
 		return 0, errors.New("Context.JSON: request has been writed")
 	}
 	ctx.written = true
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Warnln(message)
+	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&data)
+	b, _ := json.Marshal(&resFail{Ok: false, Message: message})
 	ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
-	ctx.ResponseWriter.WriteHeader(200)
+	ctx.ResponseWriter.WriteHeader(status)
 	return ctx.ResponseWriter.Write(b)
 }
 
@@ -85,7 +99,7 @@ func (c *Context) Recover() {
 	if err := recover(); err != nil {
 		stack := make([]byte, 64<<10)
 		stack = stack[:runtime.Stack(stack, false)]
-		log.Errorln("%v\n%s", err, stack)
+		log.Errorf("%v\n%s", err, stack)
 		if !c.Written() {
 			c.ResponseWriter.Header().Del("Content-Type")
 
@@ -93,7 +107,8 @@ func (c *Context) Recover() {
 				c.Data["panic"] = err
 				c.handlersStack.PanicHandler(c)
 			} else {
-				http.Error(c.ResponseWriter, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				c.Fail(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
+				//http.Error(c.ResponseWriter, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}
 	}

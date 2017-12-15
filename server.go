@@ -61,7 +61,7 @@ func Run() {
 		f()
 	}
 
-	log.Println(fmt.Sprintf("Serving %s with pid %d.", Address, os.Getpid()))
+	log.Warnln(fmt.Sprintf("Serving %s with pid %d.", Address, os.Getpid()))
 
 	srv := &graceful.Server{
 		Timeout: 10 * time.Second,
@@ -81,7 +81,6 @@ func Run() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	log.Println("Server stoped.")
+	log.Warnln("Server stoped.")
 
 }

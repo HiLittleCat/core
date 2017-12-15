@@ -53,18 +53,17 @@ func findControllerInfo(r *http.Request) (string, string) {
 }
 
 func controller(ctx *Context) {
-	w := ctx.ResponseWriter
 	r := ctx.Request
 	controllerName, methodName := findControllerInfo(r)
 	controllerT, ok := mRoutering[controllerName]
 	if !ok {
-		http.NotFound(w, r)
+		ctx.Fail(http.StatusNotFound, "Module Not Found")
 		return
 	}
 	refV := reflect.New(controllerT)
 	method := refV.MethodByName(methodName)
 	if !method.IsValid() {
-		http.NotFound(w, r)
+		ctx.Fail(http.StatusNotFound, "Method Not Found")
 		return
 	}
 
