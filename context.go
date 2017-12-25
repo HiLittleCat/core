@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"net/http"
 	"runtime"
@@ -18,12 +19,38 @@ import (
 type Context struct {
 	ResponseWriter http.ResponseWriter
 	Request        *http.Request
-	Data           map[string]interface{}
-	ResData        interface{}
-	Session        map[string]interface{}
-	index          int            // Keeps the actual handler index.
-	handlersStack  *HandlersStack // Keeps the reference to the actual handlers stack.
-	written        bool           // A flag to know if the response has been written.
+	index          int                    // Keeps the actual handler index.
+	handlersStack  *HandlersStack         // Keeps the reference to the actual handlers stack.
+	written        bool                   // A flag to know if the response has been written.
+	Data           map[string]interface{} // Custom Data
+}
+
+var ctxPool = sync.Pool{
+	New: func() interface{} {
+		return &Context{
+			Data:          make(map[string]interface{}),
+			index:         -1, // Begin with -1 because Next will increment the index before calling the first handler.
+			handlersStack: defaultHandlersStack,
+		}
+	},
+}
+
+func getContext(w http.ResponseWriter, r *http.Request) *Context {
+	ctx := ctxPool.Get().(*Context)
+	ctx.Request = r
+	ctx.ResponseWriter = contextWriter{w, ctx}
+	for k, _ := range ctx.Data {
+		delete(ctx.Data, k)
+	}
+	ctx.index = -1
+	ctx.written = false
+	return ctx
+}
+
+type ResFormat struct {
+	Ok      bool
+	Data    interface{}
+	Message string
 }
 
 type resOk struct {
@@ -36,8 +63,8 @@ type resFail struct {
 	Message string
 }
 
-// Response json
-func (ctx *Context) Success(status int, data interface{}) (int, error) {
+// Ok Response json
+func (ctx *Context) Ok(status int, data interface{}) (int, error) {
 	if ctx.written == true {
 		return 0, errors.New("Context.Success: request has been writed")
 	}
@@ -49,23 +76,26 @@ func (ctx *Context) Success(status int, data interface{}) (int, error) {
 	return ctx.ResponseWriter.Write(b)
 }
 
-// Response fail
-func (ctx *Context) Fail(status int, message string, err ...error) (int, error) {
+// Fail Response fail
+func (ctx *Context) Fail(status int, err error) (int, error) {
+	message := err.Error()
 	if ctx.written == true {
 		return 0, errors.New("Context.JSON: request has been writed")
 	}
 	ctx.written = true
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Warnln(message)
+		if _, ok := err.(*ServerError); ok == true {
+			log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(message)
+		}
 	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&resFail{Ok: false, Message: message})
+	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
 	ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
 	ctx.ResponseWriter.WriteHeader(status)
 	return ctx.ResponseWriter.Write(b)
 }
 
-// Response status code, use http.StatusText to write the response.
+// ResStatus Response status code, use http.StatusText to write the response.
 func (ctx *Context) ResStatus(code int) (int, error) {
 	if ctx.written == true {
 		return 0, errors.New("Context.ResStatus: request has been writed")
@@ -97,6 +127,10 @@ func (c *Context) Next() {
 //	defer c.Recover()
 func (c *Context) Recover() {
 	if err := recover(); err != nil {
+		if e, ok := err.(ValidationError); ok == true {
+			c.Fail(http.StatusBadRequest, &e)
+			return
+		}
 		stack := make([]byte, 64<<10)
 		stack = stack[:runtime.Stack(stack, false)]
 		log.Errorf("%v\n%s", err, stack)
@@ -107,7 +141,7 @@ func (c *Context) Recover() {
 				c.Data["panic"] = err
 				c.handlersStack.PanicHandler(c)
 			} else {
-				c.Fail(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
+				c.Fail(http.StatusInternalServerError, &ServerError{Message: http.StatusText(http.StatusInternalServerError)})
 				//http.Error(c.ResponseWriter, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}

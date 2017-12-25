@@ -23,6 +23,13 @@ var (
 	// beforeRun stores a set of functions that are triggered just before running the server.
 	beforeRun []func()
 
+	// Timeout is the duration to allow outstanding requests to survive
+	// before forcefully terminating them.
+	Timeout = 30 * time.Second
+
+	// Limit the number of outstanding requests
+	ListenLimit = 5000
+
 	// Maximum duration for reading the full request (including body); ns|µs|ms|s|m|h
 	ReadTimeout time.Duration
 
@@ -64,8 +71,8 @@ func Run() {
 	log.Warnln(fmt.Sprintf("Serving %s with pid %d.", Address, os.Getpid()))
 
 	srv := &graceful.Server{
-		Timeout: 10 * time.Second,
-
+		Timeout:     Timeout,
+		ListenLimit: ListenLimit,
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			// conn has a new state
 		},
