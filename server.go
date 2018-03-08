@@ -1,6 +1,7 @@
 package core
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -27,20 +28,26 @@ var (
 	// before forcefully terminating them.
 	Timeout = 30 * time.Second
 
-	// Limit the number of outstanding requests
+	// ListenLimit Limit the number of outstanding requests
 	ListenLimit = 5000
 
-	// Maximum duration for reading the full request (including body); ns|µs|ms|s|m|h
-	ReadTimeout time.Duration
+	// ReadTimeout Maximum duration for reading the full request (including body); ns|µs|ms|s|m|h
+	ReadTimeout = 10 * time.Second
 
-	// Maximum duration for writing the full response (including body); ns|µs|ms|s|m|h
-	WriteTimeout time.Duration
+	// WriteTimeout Maximum duration for writing the full response (including body); ns|µs|ms|s|m|h
+	WriteTimeout = 10 * time.Second
 
-	// Maximum size of memory that can be used when receiving uploaded files
+	// IdleTimeout is the maximum amount of time to wait for the
+	// next request when keep-alives are enabled. If IdleTimeout
+	// is zero, the value of ReadTimeout is used. If both are
+	// zero, ReadHeaderTimeout is used.
+	IdleTimeout time.Duration
+
+	// MultipartMaxmemoryMb Maximum size of memory that can be used when receiving uploaded files
 	MultipartMaxmemoryMb int
 
-	//Max HTTP Herder size, default is 0, no limit
-	MaxHeaderBytes int
+	// MaxHeaderBytes Max HTTP Herder size, default is 0, no limit
+	MaxHeaderBytes = 1 << 20
 )
 
 func pathExists(path string) (bool, error) {
@@ -67,19 +74,23 @@ func Run() {
 	for _, f := range beforeRun {
 		f()
 	}
+	flag.StringVar(&Address, "address", ":8080", "-address=8080")
+	flag.BoolVar(&Production, "production", false, "-production=false")
 
-	log.Warnln(fmt.Sprintf("Serving %s with pid %d.", Address, os.Getpid()))
+	log.Warnln(fmt.Sprintf("Serving %s with pid %d. Production is %t.", Address, os.Getpid(), Production))
 
 	srv := &graceful.Server{
-		Timeout:     Timeout,
 		ListenLimit: ListenLimit,
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			// conn has a new state
 		},
-
 		Server: &http.Server{
-			Addr:    Address,
-			Handler: defaultHandlersStack,
+			Addr:           Address,
+			Handler:        defaultHandlersStack,
+			ReadTimeout:    ReadTimeout,
+			WriteTimeout:   WriteTimeout,
+			IdleTimeout:    IdleTimeout,
+			MaxHeaderBytes: MaxHeaderBytes,
 		},
 	}
 

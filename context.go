@@ -39,7 +39,7 @@ func getContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx := ctxPool.Get().(*Context)
 	ctx.Request = r
 	ctx.ResponseWriter = contextWriter{w, ctx}
-	for k, _ := range ctx.Data {
+	for k := range ctx.Data {
 		delete(ctx.Data, k)
 	}
 	ctx.index = -1
@@ -106,16 +106,16 @@ func (ctx *Context) ResStatus(code int) (int, error) {
 }
 
 // Written tells if the response has been written.
-func (c *Context) Written() bool {
-	return c.written
+func (ctx *Context) Written() bool {
+	return ctx.written
 }
 
 // Next calls the next handler in the stack, but only if the response isn't already written.
-func (c *Context) Next() {
+func (ctx *Context) Next() {
 	// Call the next handler only if there is one and the response hasn't been written.
-	if !c.Written() && c.index < len(c.handlersStack.Handlers)-1 {
-		c.index++
-		c.handlersStack.Handlers[c.index](c)
+	if !ctx.Written() && ctx.index < len(ctx.handlersStack.Handlers)-1 {
+		ctx.index++
+		ctx.handlersStack.Handlers[ctx.index](ctx)
 	}
 }
 
@@ -125,23 +125,23 @@ func (c *Context) Next() {
 // Usage:
 //
 //	defer c.Recover()
-func (c *Context) Recover() {
+func (ctx *Context) Recover() {
 	if err := recover(); err != nil {
 		if e, ok := err.(ValidationError); ok == true {
-			c.Fail(http.StatusBadRequest, &e)
+			ctx.Fail(http.StatusBadRequest, &e)
 			return
 		}
 		stack := make([]byte, 64<<10)
 		stack = stack[:runtime.Stack(stack, false)]
-		log.Errorf("%v\n%s", err, stack)
-		if !c.Written() {
-			c.ResponseWriter.Header().Del("Content-Type")
+		log.Errorf("%v \n %s", err, stack)
+		if !ctx.Written() {
+			ctx.ResponseWriter.Header().Del("Content-Type")
 
-			if c.handlersStack.PanicHandler != nil {
-				c.Data["panic"] = err
-				c.handlersStack.PanicHandler(c)
+			if ctx.handlersStack.PanicHandler != nil {
+				ctx.Data["panic"] = err
+				ctx.handlersStack.PanicHandler(ctx)
 			} else {
-				c.Fail(http.StatusInternalServerError, &ServerError{Message: http.StatusText(http.StatusInternalServerError)})
+				ctx.Fail(http.StatusInternalServerError, &ServerError{Message: http.StatusText(http.StatusInternalServerError)})
 				//http.Error(c.ResponseWriter, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}

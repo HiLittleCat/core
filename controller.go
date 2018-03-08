@@ -7,15 +7,18 @@ import (
 	"strings"
 )
 
+// IController 控制器接口定义
 type IController interface {
 	Init(ctx *Context)
 }
 
+// Controller 控制器
 type Controller struct {
 	Ctx      *Context
 	Validate *Validation
 }
 
+// Init 控制器初始化方法
 func (c *Controller) Init(ctx *Context) {
 	c.Ctx = ctx
 }
@@ -24,7 +27,7 @@ func (c *Controller) Init(ctx *Context) {
 func (c *Controller) ParamMin(key string, n int) int {
 	value, err := strconv.Atoi(c.Ctx.Request.FormValue(key))
 	if err != nil {
-		panic(ValidationError{Message: "Query param " + key + " Minimum is " + strconv.Itoa(n)})
+		panic(ValidationError{Message: "Query param " + key + " must be a number."})
 	}
 	b := c.Validate.Min(value, n)
 	if b == false {
@@ -43,13 +46,35 @@ func (c *Controller) ParamLength(key string, n int) string {
 	return value
 }
 
-// ParamGet  param get
+// ParamRange  param length validate
+func (c *Controller) ParamRange(key string, n int, m int) int {
+	value, err := strconv.Atoi(c.Ctx.Request.FormValue(key))
+	if err != nil {
+		panic(ValidationError{Message: "Query param " + key + " must be a number."})
+	}
+	b := c.Validate.Range(value, n, m)
+	if b == false {
+		panic(ValidationError{Message: "Query param " + key + " range is " + strconv.Itoa(n) + " to " + strconv.Itoa(m)})
+	}
+	return value
+}
+
+// ParamGet  return param
 func (c *Controller) ParamGet(key string) string {
 	value := c.Ctx.Request.FormValue(key)
 	return value
 }
 
-var mRoutering map[string]reflect.Type = make(map[string]reflect.Type)
+// ParamRequire param must not be ""
+func (c *Controller) ParamRequire(key string) string {
+	value := c.Ctx.Request.FormValue(key)
+	if value == "" {
+		panic(ValidationError{Message: "Query param " + key + " is required. "})
+	}
+	return value
+}
+
+var mRoutering = make(map[string]reflect.Type)
 
 // AutoController register controller
 func AutoController(controller IController) {
@@ -102,6 +127,9 @@ func AutoRouter(ctx *Context) {
 	controller := refV.Interface().(IController)
 	controller.Init(ctx)
 	v := method.Call(nil)
+	if len(v) == 0 {
+		return
+	}
 	value := v[0].Interface()
 	err := v[1].Interface()
 	if err != nil {
