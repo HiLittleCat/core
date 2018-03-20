@@ -47,12 +47,6 @@ func getContext(w http.ResponseWriter, r *http.Request) *Context {
 	return ctx
 }
 
-type ResFormat struct {
-	Ok      bool
-	Data    interface{}
-	Message string
-}
-
 type resOk struct {
 	Ok   bool
 	Data interface{}
