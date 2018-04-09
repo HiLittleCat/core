@@ -15,6 +15,9 @@ import (
 )
 
 var (
+	// CommandLine Open command line params.
+	CommandLine bool
+
 	// Production allows handlers know whether the server is running in a production environment.
 	Production bool
 
@@ -74,8 +77,12 @@ func Run() {
 	for _, f := range beforeRun {
 		f()
 	}
-	flag.StringVar(&Address, "address", ":8080", "-address=8080")
-	flag.BoolVar(&Production, "production", false, "-production=false")
+
+	if CommandLine {
+		flag.StringVar(&Address, "address", ":8080", "-address=:8080")
+		flag.BoolVar(&Production, "production", false, "-production=false")
+		flag.Parse()
+	}
 
 	log.Warnln(fmt.Sprintf("Serving %s with pid %d. Production is %t.", Address, os.Getpid(), Production))
 

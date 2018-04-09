@@ -44,11 +44,13 @@ func HandlePanic(h func(*Context)) {
 
 // ServeHTTP makes a context for the request, sets some good practice default headers and enters the handlers stack.
 func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Make a context for the request.
+
+	// Get a context for the request from ctxPool.
 	c := getContext(w, r)
 
 	// Set some "good practice" default headers.
 	c.ResponseWriter.Header().Set("Cache-Control", "no-cache")
+	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")
 	c.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 
@@ -56,4 +58,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer c.Recover()
 	// Enter the handlers stack.
 	c.Next()
+
+	// Put the context to ctxPool
+	putContext(c)
 }

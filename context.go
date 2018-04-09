@@ -25,28 +25,6 @@ type Context struct {
 	Data           map[string]interface{} // Custom Data
 }
 
-var ctxPool = sync.Pool{
-	New: func() interface{} {
-		return &Context{
-			Data:          make(map[string]interface{}),
-			index:         -1, // Begin with -1 because Next will increment the index before calling the first handler.
-			handlersStack: defaultHandlersStack,
-		}
-	},
-}
-
-func getContext(w http.ResponseWriter, r *http.Request) *Context {
-	ctx := ctxPool.Get().(*Context)
-	ctx.Request = r
-	ctx.ResponseWriter = contextWriter{w, ctx}
-	for k := range ctx.Data {
-		delete(ctx.Data, k)
-	}
-	ctx.index = -1
-	ctx.written = false
-	return ctx
-}
-
 type resOk struct {
 	Ok   bool
 	Data interface{}
@@ -65,7 +43,6 @@ func (ctx *Context) Ok(status int, data interface{}) (int, error) {
 	ctx.written = true
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resOk{Ok: true, Data: data})
-	ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
 	ctx.ResponseWriter.WriteHeader(status)
 	return ctx.ResponseWriter.Write(b)
 }
@@ -84,7 +61,6 @@ func (ctx *Context) Fail(status int, err error) (int, error) {
 	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
-	ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
 	ctx.ResponseWriter.WriteHeader(status)
 	return ctx.ResponseWriter.Write(b)
 }
@@ -140,6 +116,37 @@ func (ctx *Context) Recover() {
 			}
 		}
 	}
+}
+
+// ctxPool
+var ctxPool = sync.Pool{
+	New: func() interface{} {
+		return &Context{
+			Data:          make(map[string]interface{}),
+			index:         -1, // Begin with -1 because Next will increment the index before calling the first handler.
+			handlersStack: defaultHandlersStack,
+		}
+	},
+}
+
+func getContext(w http.ResponseWriter, r *http.Request) *Context {
+	ctx := ctxPool.Get().(*Context)
+	ctx.Request = r
+	ctx.ResponseWriter = contextWriter{w, ctx}
+	ctx.Data = make(map[string]interface{})
+	return ctx
+}
+
+func putContext(ctx *Context) {
+	if ctx.Request.Body != nil {
+		ctx.Request.Body.Close()
+	}
+	ctx.ResponseWriter = nil
+	ctx.Request = nil
+	ctx.index = -1
+	ctx.written = false
+	ctx.Data = nil
+	ctxPool.Put(ctx)
 }
 
 // contextWriter represents a binder that catches a downstream response writing and sets the context's written flag on the first write.
