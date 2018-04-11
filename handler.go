@@ -56,6 +56,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Always recover form panics.
 	defer c.Recover()
+
 	// Enter the handlers stack.
 	c.Next()
 

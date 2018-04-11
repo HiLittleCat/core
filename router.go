@@ -8,8 +8,8 @@ import (
 
 var mRoutering = make(map[string]reflect.Type)
 
-// AutoController register controller
-func AutoController(controller IController) {
+// AddController register controller
+func AddController(controller IController) {
 	refV := reflect.ValueOf(controller)
 	refT := reflect.Indirect(refV).Type()
 	refName := strings.ToLower(refT.Name())
@@ -39,8 +39,8 @@ func findControllerInfo(r *http.Request) (string, string) {
 	return controllerName, methodName
 }
 
-// AutoRouter route middleware
-func AutoRouter(ctx *Context) {
+// Router route middleware
+func Router(ctx *Context) {
 	r := ctx.Request
 	controllerName, methodName := findControllerInfo(r)
 	controllerT, ok := mRoutering[controllerName]

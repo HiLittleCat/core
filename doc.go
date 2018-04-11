@@ -102,9 +102,6 @@ That's why you have to import all and only the handlers or helpers you need:
 	response
 		Readable response helper
 		https://godoc.org/github.com/HiLittleCat/response
-	route
-		Flexible routing helper
-		https://godoc.org/github.com/HiLittleCat/route
 	secure
 		Quick security wins
 		https://godoc.org/github.com/HiLittleCat/secure

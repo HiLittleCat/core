@@ -53,17 +53,6 @@ var (
 	MaxHeaderBytes = 1 << 20
 )
 
-func pathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
-}
-
 func init() {
 }
 
@@ -78,6 +67,7 @@ func Run() {
 		f()
 	}
 
+	// parse command line params.
 	if OpenCommandLine {
 		flag.StringVar(&Address, "address", ":8080", "-address=:8080")
 		flag.BoolVar(&Production, "production", false, "-production=false")
@@ -86,6 +76,10 @@ func Run() {
 
 	log.Warnln(fmt.Sprintf("Serving %s with pid %d. Production is %t.", Address, os.Getpid(), Production))
 
+	// set default router.
+	Use(Router)
+
+	// set graceful server.
 	srv := &graceful.Server{
 		ListenLimit: ListenLimit,
 		ConnState: func(conn net.Conn, state http.ConnState) {
