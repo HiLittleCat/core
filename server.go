@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	// CommandLine Open command line params.
-	CommandLine bool
+	// OpenCommandLine Open command line params.
+	OpenCommandLine bool
 
 	// Production allows handlers know whether the server is running in a production environment.
 	Production bool
@@ -35,7 +35,7 @@ var (
 	ListenLimit = 5000
 
 	// ReadTimeout Maximum duration for reading the full request (including body); ns|µs|ms|s|m|h
-	ReadTimeout = 10 * time.Second
+	ReadTimeout = 5 * time.Second
 
 	// WriteTimeout Maximum duration for writing the full response (including body); ns|µs|ms|s|m|h
 	WriteTimeout = 10 * time.Second
@@ -78,7 +78,7 @@ func Run() {
 		f()
 	}
 
-	if CommandLine {
+	if OpenCommandLine {
 		flag.StringVar(&Address, "address", ":8080", "-address=:8080")
 		flag.BoolVar(&Production, "production", false, "-production=false")
 		flag.Parse()
@@ -100,7 +100,6 @@ func Run() {
 			MaxHeaderBytes: MaxHeaderBytes,
 		},
 	}
-
 	err := srv.ListenAndServe()
 
 	if err != nil {
