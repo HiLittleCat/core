@@ -8,11 +8,13 @@ import (
 	"regexp"
 )
 
+// IRouter router interface
 type IRouter interface {
 	IRoutes
 	Group(string, ...RouterHandler) *RouterGroup
 }
 
+// IRoutes routes interface
 type IRoutes interface {
 	Use(...RouterHandler) IRoutes
 
@@ -62,6 +64,7 @@ func (group *RouterGroup) Group(relativePath string, handlers ...RouterHandler) 
 	}
 }
 
+// BasePath set group base path
 func (group *RouterGroup) BasePath() string {
 	return group.basePath
 }

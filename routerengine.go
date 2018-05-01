@@ -1,6 +1,6 @@
 package core
 
-// Routers
+// Routers create router instance
 var Routers = create()
 
 // Engine each group has a router engine
