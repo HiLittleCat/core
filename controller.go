@@ -7,6 +7,7 @@ import (
 // IController 控制器接口定义
 type IController interface {
 	Register()
+	Err(int, string) error
 }
 
 // Controller 控制器
@@ -18,10 +19,15 @@ type Controller struct {
 func (c *Controller) Register() {
 }
 
+// Err return a controller error
+func (c *Controller) Err(errno int, message string) error {
+	return (&BusinessError{}).New(errno, message)
+}
+
 func (c *Controller) getRValue(ctx *Context, key string) string {
 	value := ctx.Request.FormValue(key)
 	if value == "" {
-		value = ctx.PathValue[key]
+		value = ctx.Param(key)
 	}
 	return value
 }

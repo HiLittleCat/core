@@ -77,7 +77,7 @@ func Run() {
 	log.Warnln(fmt.Sprintf("Serving %s with pid %d. Production is %t.", Address, os.Getpid(), Production))
 
 	// set default router.
-	Use(Routers.RouteHandler)
+	Use(Routers.handlers)
 
 	// set graceful server.
 	srv := &graceful.Server{

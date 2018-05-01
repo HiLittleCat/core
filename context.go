@@ -22,11 +22,11 @@ type Context struct {
 	index          int                    // Keeps the actual handler index.
 	handlersStack  *HandlersStack         // Keeps the reference to the actual handlers stack.
 	written        bool                   // A flag to know if the response has been written.
-	PathValue      map[string]string      // Path Value
+	Params         Params                 // Path Value
 	Data           map[string]interface{} // Custom Data
 }
 
-// ResFormat response data format
+// ResFormat response data
 type ResFormat struct {
 	Ok      bool
 	Data    interface{}
@@ -44,40 +44,40 @@ type resFail struct {
 }
 
 // Ok Response json
-func (ctx *Context) Ok(status int, data interface{}) {
+func (ctx *Context) Ok(data interface{}) {
 	if ctx.written == true {
-		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"]}).Warnln("Context.Success: request has been writed")
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Success: request has been writed")
 		return
 	}
 	ctx.written = true
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resOk{Ok: true, Data: data})
-	ctx.ResponseWriter.WriteHeader(status)
+	ctx.ResponseWriter.WriteHeader(http.StatusOK)
 	_, err := ctx.ResponseWriter.Write(b)
 	if err != nil {
-		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(err.Error())
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(err.Error())
 	}
 }
 
 // Fail Response fail
-func (ctx *Context) Fail(status int, err error) {
+func (ctx *Context) Fail(err error) {
 	message := err.Error()
 	if ctx.written == true {
-		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"]}).Warnln("Context.Success: request has been writed")
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Success: request has been writed")
 		return
 	}
 	ctx.written = true
 	if err != nil {
 		if _, ok := err.(*ServerError); ok == true {
-			log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(message)
+			log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(message)
 		}
 	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
-	ctx.ResponseWriter.WriteHeader(status)
+	ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
 	_, err = ctx.ResponseWriter.Write(b)
 	if err != nil {
-		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(err.Error())
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(err.Error())
 	}
 }
 
@@ -105,6 +105,16 @@ func (ctx *Context) Next() {
 	}
 }
 
+// Param returns the value of the URL param.
+// It is a shortcut for c.Params.ByName(key)
+//     router.GET("/user/:id", func(c *gin.Context) {
+//         // a GET request to /user/john
+//         id := c.Param("id") // id == "john"
+//     })
+func (ctx *Context) Param(key string) string {
+	return ctx.Params.ByName(key)
+}
+
 // Recover recovers form panics.
 // It logs the stack and uses the PanicHandler (or a classic Internal Server Error) to write the response.
 //
@@ -114,7 +124,7 @@ func (ctx *Context) Next() {
 func (ctx *Context) Recover() {
 	if err := recover(); err != nil {
 		if e, ok := err.(*ValidationError); ok == true {
-			ctx.Fail(http.StatusBadRequest, e)
+			ctx.Fail(e)
 			return
 		}
 
@@ -128,7 +138,7 @@ func (ctx *Context) Recover() {
 				ctx.Data["panic"] = err
 				ctx.handlersStack.PanicHandler(ctx)
 			} else {
-				ctx.Fail(http.StatusInternalServerError, (&ServerError{}).New(http.StatusText(http.StatusInternalServerError)))
+				ctx.Fail((&ServerError{}).New(http.StatusText(http.StatusInternalServerError)))
 			}
 		}
 	}
@@ -150,7 +160,6 @@ func getContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx.Request = r
 	ctx.ResponseWriter = contextWriter{w, ctx}
 	ctx.Data = make(map[string]interface{})
-	ctx.PathValue = make(map[string]string)
 	return ctx
 }
 
@@ -159,7 +168,7 @@ func putContext(ctx *Context) {
 		ctx.Request.Body.Close()
 	}
 	ctx.Data = nil
-	ctx.PathValue = nil
+	ctx.Params = nil
 	ctx.ResponseWriter = nil
 	ctx.Request = nil
 	ctx.index = -1

@@ -59,6 +59,11 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Enter the handlers stack.
 	c.Next()
 
+	// Respnose data
+	if c.written == false {
+		c.Ok(c.Data["ResData"])
+	}
+
 	// Put the context to ctxPool
 	putContext(c)
 }

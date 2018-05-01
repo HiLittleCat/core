@@ -4,6 +4,12 @@ import (
 	"net/http"
 )
 
+// ICoreError core error interface
+type ICoreError interface {
+	New(int, string) error
+	Error() string
+}
+
 // coreError core error define
 type coreError struct {
 	HTTPCode int
@@ -39,6 +45,14 @@ func (e *ServerError) New(message string) *ServerError {
 // BusinessError http.StatusInternalServerError
 type BusinessError struct {
 	coreError
+}
+
+// New http.StatusInternalServerError
+func (e *BusinessError) New(errno int, message string) *BusinessError {
+	e.HTTPCode = http.StatusInternalServerError
+	e.Errno = errno
+	e.Message = message
+	return e
 }
 
 // DBError http.StatusInternalServerError
