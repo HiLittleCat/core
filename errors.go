@@ -1,53 +1,83 @@
 package core
 
+import (
+	"net/http"
+)
+
+// coreError core error define
+type coreError struct {
+	HTTPCode int
+	Errno    int
+	Message  string
+}
+
+// New http.StatusInternalServerError
+func (e *coreError) New(errno int, message string) *coreError {
+	e.HTTPCode = http.StatusInternalServerError
+	e.Errno = errno
+	e.Message = message
+	return e
+}
+
+func (e *coreError) Error() string {
+	return e.Message
+}
+
 // ServerError http.StatusInternalServerError
 type ServerError struct {
-	Message string
+	coreError
 }
 
-func (s *ServerError) Error() string {
-	return s.Message
-}
-
-func (v *ServerError) Code() int {
-	return 500
+// New ServerError.New
+func (e *ServerError) New(message string) *ServerError {
+	e.HTTPCode = http.StatusInternalServerError
+	e.Errno = 0
+	e.Message = message
+	return e
 }
 
 // BusinessError http.StatusInternalServerError
 type BusinessError struct {
-	Message string
+	coreError
 }
 
-func (s *BusinessError) Error() string {
-	return s.Message
+// DBError http.StatusInternalServerError
+type DBError struct {
+	coreError
+	DBName string
 }
 
-func (v *BusinessError) Code() int {
-	return 500
+// New DBError.New
+func (e *DBError) New(dbName string, message string) *DBError {
+	e.HTTPCode = http.StatusInternalServerError
+	e.Errno = 0
+	e.Message = message
+	e.DBName = dbName
+	return e
 }
 
 // ValidationError simple struct to store the Message & Key of a validation error
 type ValidationError struct {
-	Message string
+	coreError
 }
 
-func (v *ValidationError) Error() string {
-	return v.Message
+// New ValidationError.New
+func (e *ValidationError) New(message string) *ValidationError {
+	e.HTTPCode = http.StatusBadRequest
+	e.Errno = 0
+	e.Message = message
+	return e
 }
 
-func (v *ValidationError) Code() int {
-	return 400
-}
-
-// NotFoundError simple struct to store the Message & Key of a validation error
+// NotFoundError route not found.
 type NotFoundError struct {
-	Message string
+	coreError
 }
 
-func (n *NotFoundError) Error() string {
-	return n.Message
-}
-
-func (v *NotFoundError) Code() int {
-	return 404
+// New NotFoundError.New
+func (e *NotFoundError) New(message string) *NotFoundError {
+	e.HTTPCode = http.StatusNotFound
+	e.Errno = 0
+	e.Message = message
+	return e
 }

@@ -22,7 +22,15 @@ type Context struct {
 	index          int                    // Keeps the actual handler index.
 	handlersStack  *HandlersStack         // Keeps the reference to the actual handlers stack.
 	written        bool                   // A flag to know if the response has been written.
+	PathValue      map[string]string      // Path Value
 	Data           map[string]interface{} // Custom Data
+}
+
+// ResFormat response data format
+type ResFormat struct {
+	Ok      bool
+	Data    interface{}
+	Message string
 }
 
 type resOk struct {
@@ -36,22 +44,27 @@ type resFail struct {
 }
 
 // Ok Response json
-func (ctx *Context) Ok(status int, data interface{}) (int, error) {
+func (ctx *Context) Ok(status int, data interface{}) {
 	if ctx.written == true {
-		return 0, errors.New("Context.Success: request has been writed")
+		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"]}).Warnln("Context.Success: request has been writed")
+		return
 	}
 	ctx.written = true
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resOk{Ok: true, Data: data})
 	ctx.ResponseWriter.WriteHeader(status)
-	return ctx.ResponseWriter.Write(b)
+	_, err := ctx.ResponseWriter.Write(b)
+	if err != nil {
+		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(err.Error())
+	}
 }
 
 // Fail Response fail
-func (ctx *Context) Fail(status int, err error) (int, error) {
+func (ctx *Context) Fail(status int, err error) {
 	message := err.Error()
 	if ctx.written == true {
-		return 0, errors.New("Context.JSON: request has been writed")
+		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"]}).Warnln("Context.Success: request has been writed")
+		return
 	}
 	ctx.written = true
 	if err != nil {
@@ -62,7 +75,10 @@ func (ctx *Context) Fail(status int, err error) (int, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
 	ctx.ResponseWriter.WriteHeader(status)
-	return ctx.ResponseWriter.Write(b)
+	_, err = ctx.ResponseWriter.Write(b)
+	if err != nil {
+		log.WithFields(log.Fields{"Controller": ctx.Data["Controller"], "Method": ctx.Data["Method"], "err": err}).Warnln(err.Error())
+	}
 }
 
 // ResStatus Response status code, use http.StatusText to write the response.
@@ -97,10 +113,11 @@ func (ctx *Context) Next() {
 //	defer c.Recover()
 func (ctx *Context) Recover() {
 	if err := recover(); err != nil {
-		if e, ok := err.(ValidationError); ok == true {
-			ctx.Fail(http.StatusBadRequest, &e)
+		if e, ok := err.(*ValidationError); ok == true {
+			ctx.Fail(http.StatusBadRequest, e)
 			return
 		}
+
 		stack := make([]byte, 64<<10)
 		stack = stack[:runtime.Stack(stack, false)]
 		log.Errorf("%v \n %s", err, stack)
@@ -111,8 +128,7 @@ func (ctx *Context) Recover() {
 				ctx.Data["panic"] = err
 				ctx.handlersStack.PanicHandler(ctx)
 			} else {
-				ctx.Fail(http.StatusInternalServerError, &ServerError{Message: http.StatusText(http.StatusInternalServerError)})
-				//http.Error(c.ResponseWriter, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				ctx.Fail(http.StatusInternalServerError, (&ServerError{}).New(http.StatusText(http.StatusInternalServerError)))
 			}
 		}
 	}
@@ -134,6 +150,7 @@ func getContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx.Request = r
 	ctx.ResponseWriter = contextWriter{w, ctx}
 	ctx.Data = make(map[string]interface{})
+	ctx.PathValue = make(map[string]string)
 	return ctx
 }
 
@@ -141,11 +158,12 @@ func putContext(ctx *Context) {
 	if ctx.Request.Body != nil {
 		ctx.Request.Body.Close()
 	}
+	ctx.Data = nil
+	ctx.PathValue = nil
 	ctx.ResponseWriter = nil
 	ctx.Request = nil
 	ctx.index = -1
 	ctx.written = false
-	ctx.Data = nil
 	ctxPool.Put(ctx)
 }
 
