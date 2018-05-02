@@ -64,11 +64,7 @@ func (engine *Engine) handlers(ctx *Context) {
 
 func (engine *Engine) exeHandlers(ctx *Context, handlers RouterHandlerChain) {
 	for _, h := range handlers {
-		val, err := h(ctx)
-		if err != nil {
-			panic(err)
-		} else if val != nil {
-			ctx.Data["ResData"] = val
-		}
+		ctx.handlersStack.Use(h)
 	}
+	ctx.Next()
 }

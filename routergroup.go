@@ -30,7 +30,7 @@ type IRoutes interface {
 }
 
 // RouterHandler http handler
-type RouterHandler func(*Context) (interface{}, error)
+type RouterHandler func(*Context)
 
 // RouterHandlerChain http handler array
 type RouterHandlerChain []RouterHandler

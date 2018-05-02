@@ -6,8 +6,8 @@ import (
 
 // HandlersStack contains a set of handlers.
 type HandlersStack struct {
-	Handlers     []func(*Context) // The handlers stack.
-	PanicHandler func(*Context)   // The handler called in case of panic. Useful to send custom server error information. Context.Data["panic"] contains the panic error.
+	Handlers     []RouterHandler // The handlers stack.
+	PanicHandler RouterHandler   // The handler called in case of panic. Useful to send custom server error information. Context.Data["panic"] contains the panic error.
 }
 
 // defaultHandlersStack contains the default handlers stack used for serving.
@@ -19,26 +19,26 @@ func NewHandlersStack() *HandlersStack {
 }
 
 // Use adds a handler to the handlers stack.
-func (hs *HandlersStack) Use(h func(*Context)) {
+func (hs *HandlersStack) Use(h RouterHandler) {
 	hs.Handlers = append(hs.Handlers, h)
 }
 
 // Use adds a handler to the default handlers stack.
-func Use(h func(*Context)) {
+func Use(h RouterHandler) {
 	defaultHandlersStack.Use(h)
 }
 
 // HandlePanic sets the panic handler of the handlers stack.
 //
 // Context.Data["panic"] contains the panic error.
-func (hs *HandlersStack) HandlePanic(h func(*Context)) {
+func (hs *HandlersStack) HandlePanic(h RouterHandler) {
 	hs.PanicHandler = h
 }
 
 // HandlePanic sets the panic handler of the default handlers stack.
 //
 // Context.Data["panic"] contains the panic error.
-func HandlePanic(h func(*Context)) {
+func HandlePanic(h RouterHandler) {
 	defaultHandlersStack.HandlePanic(h)
 }
 
@@ -61,7 +61,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Respnose data
 	if c.written == false {
-		c.Ok(c.Data["ResData"])
+		c.Fail((&coreError{}).New(0, "has not written response"))
 	}
 
 	// Put the context to ctxPool
