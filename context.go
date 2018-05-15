@@ -61,16 +61,21 @@ func (ctx *Context) Ok(data interface{}) {
 
 // Fail Response fail
 func (ctx *Context) Fail(err error) {
+	if err == nil {
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Fail: err is nil")
+		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
+		_, err = ctx.ResponseWriter.Write(nil)
+		return
+	}
+
 	message := err.Error()
 	if ctx.written == true {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Success: request has been writed")
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Fail: request has been writed")
 		return
 	}
 	ctx.written = true
-	if err != nil {
-		if _, ok := err.(*ServerError); ok == true {
-			log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(message)
-		}
+	if _, ok := err.(*ServerError); ok == true {
+		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(message)
 	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
