@@ -16,8 +16,6 @@ type IRouter interface {
 
 // IRoutes routes interface
 type IRoutes interface {
-	Use(...RouterHandler) IRoutes
-
 	Handle(string, string, ...RouterHandler) IRoutes
 	Any(string, ...RouterHandler) IRoutes
 	GET(string, ...RouterHandler) IRoutes
@@ -159,5 +157,8 @@ func (group *RouterGroup) calculateAbsolutePath(relativePath string) string {
 }
 
 func (group *RouterGroup) returnObj() IRoutes {
+	if group.root {
+		return group.engine
+	}
 	return group
 }

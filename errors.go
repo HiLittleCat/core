@@ -6,8 +6,9 @@ import (
 
 // ICoreError core error interface
 type ICoreError interface {
-	New(int, string) error
 	Error() string
+	GetHTTPCode() int
+	GetErrno() int
 }
 
 // coreError core error define
@@ -25,8 +26,19 @@ func (e *coreError) New(errno int, message string) *coreError {
 	return e
 }
 
+// Error get error message
 func (e *coreError) Error() string {
 	return e.Message
+}
+
+// GetHTTPCode get error HTTPCode
+func (e *coreError) GetHTTPCode() int {
+	return e.HTTPCode
+}
+
+// GetErrno get error Errno
+func (e *coreError) GetErrno() int {
+	return e.Errno
 }
 
 // ServerError http.StatusInternalServerError

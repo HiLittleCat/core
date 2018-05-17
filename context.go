@@ -46,7 +46,7 @@ type resFail struct {
 // Ok Response json
 func (ctx *Context) Ok(data interface{}) {
 	if ctx.written == true {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Success: request has been writed")
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Success: request has been writed")
 		return
 	}
 	ctx.written = true
@@ -55,14 +55,14 @@ func (ctx *Context) Ok(data interface{}) {
 	ctx.ResponseWriter.WriteHeader(http.StatusOK)
 	_, err := ctx.ResponseWriter.Write(b)
 	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(err.Error())
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	}
 }
 
 // Fail Response fail
 func (ctx *Context) Fail(err error) {
 	if err == nil {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Fail: err is nil")
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: err is nil")
 		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
 		_, err = ctx.ResponseWriter.Write(nil)
 		return
@@ -70,19 +70,26 @@ func (ctx *Context) Fail(err error) {
 
 	message := err.Error()
 	if ctx.written == true {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln("Context.Fail: request has been writed")
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: request has been writed")
 		return
 	}
 	ctx.written = true
 	if _, ok := err.(*ServerError); ok == true {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(message)
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(message)
 	}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&resFail{Ok: false, Message: ctx.Request.URL.Path + ": " + message})
-	ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
+	b, _ := json.Marshal(&resFail{Ok: false, Message: message})
+
+	coreErr, ok := err.(ICoreError)
+	if ok == true {
+		ctx.ResponseWriter.WriteHeader(coreErr.GetHTTPCode())
+	} else {
+		ctx.ResponseWriter.WriteHeader(http.StatusInternalServerError)
+	}
+
 	_, err = ctx.ResponseWriter.Write(b)
 	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Data["path"]}).Warnln(err.Error())
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	}
 }
 
