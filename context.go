@@ -142,7 +142,7 @@ func (ctx *Context) Recover() {
 
 		stack := make([]byte, 64<<10)
 		stack = stack[:runtime.Stack(stack, false)]
-		log.Errorf("%v \n %s", err, stack)
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Errorln(string(stack))
 		if !ctx.Written() {
 			ctx.ResponseWriter.Header().Del("Content-Type")
 
