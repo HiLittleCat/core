@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"net/http"
@@ -125,6 +126,62 @@ func (ctx *Context) Next() {
 //     })
 func (ctx *Context) Param(key string) string {
 	return ctx.Params.ByName(key)
+}
+
+// GetSession get session
+func (ctx *Context) GetSession() IStore {
+	store := ctx.Data["session"]
+	if store == nil {
+		return nil
+	}
+	st, ok := store.(IStore)
+	if ok == false {
+		return nil
+	}
+	return st
+}
+
+// SetSession set session
+func (ctx *Context) SetSession(key string, values map[string]string) error {
+	// 生成csrf token
+	values["token"] = ctx.genToken(key)
+	store, err := provider.Set(key, values)
+	if err != nil {
+		return err
+	}
+	cookie := httpCookie
+	cookie.Value = store.Values[cookieValueKey]
+	ctx.Data["session"] = store
+
+	respCookie := ctx.ResponseWriter.Header().Get("Set-Cookie")
+	if strings.HasPrefix(respCookie, cookie.Name) {
+		ctx.ResponseWriter.Header().Del("Set-Cookie")
+	}
+	http.SetCookie(ctx.ResponseWriter, &cookie)
+	return nil
+}
+
+// FreshSession set session
+func (ctx *Context) FreshSession(key string) error {
+	err := provider.UpExpire(key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteSession delete session
+func (ctx *Context) DeleteSession(sid string) error {
+	ctx.Data["session"] = nil
+	provider.Destroy(sid)
+	cookie := httpCookie
+	cookie.MaxAge = -1
+	http.SetCookie(ctx.ResponseWriter, &cookie)
+	return nil
+}
+
+func (ctx *Context) genToken(key string) string {
+	return key
 }
 
 // Recover recovers form panics.
