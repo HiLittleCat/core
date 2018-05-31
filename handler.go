@@ -62,7 +62,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Respnose data
 	if c.written == false {
-		c.Fail(errors.New(""))
+		c.Fail(errors.New("not written"))
 	}
 
 	// Put the context to ctxPool

@@ -44,7 +44,7 @@ func (engine *Engine) handlers(ctx *Context) {
 	httpMethod := ctx.Request.Method
 	path := ctx.Request.URL.Path
 	unescape := false
-
+	found := false
 	// Find root of the tree for the given HTTP method
 	t := engine.trees
 	for i, tl := 0, len(t); i < tl; i++ {
@@ -53,12 +53,16 @@ func (engine *Engine) handlers(ctx *Context) {
 			// Find route in tree
 			handlers, params, _ := root.getValue(path, ctx.Params, unescape)
 			if handlers != nil {
+				found = true
 				ctx.Params = params
 				engine.exeHandlers(ctx, handlers)
 				return
 			}
 			break
 		}
+	}
+	if found == false {
+		ctx.Fail((&NotFoundError{}).New("Not found"))
 	}
 }
 
