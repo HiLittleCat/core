@@ -1,13 +1,14 @@
 package core
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"strings"
-	"sync"
-
 	"net/http"
 	"runtime"
+	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
@@ -144,13 +145,14 @@ func (ctx *Context) GetSession() IStore {
 // SetSession set session
 func (ctx *Context) SetSession(key string, values map[string]string) error {
 	// 生成csrf token
-	values["token"] = ctx.genToken(key)
-	store, err := provider.Set(key, values)
+	//values["token"] = ctx.genToken(key)
+	sid := ctx.genSid(key)
+	store, err := provider.Set(sid, values)
 	if err != nil {
 		return err
 	}
 	cookie := httpCookie
-	cookie.Value = store.Values[cookieValueKey]
+	cookie.Value = sid
 	ctx.Data["session"] = store
 
 	respCookie := ctx.ResponseWriter.Header().Get("Set-Cookie")
@@ -182,6 +184,13 @@ func (ctx *Context) DeleteSession(sid string) error {
 
 func (ctx *Context) genToken(key string) string {
 	return key
+}
+
+func (ctx *Context) genSid(key string) string {
+	h := md5.New()
+	h.Write([]byte(key))
+	cipherStr := h.Sum(nil)
+	return hex.EncodeToString(cipherStr)
 }
 
 // Recover recovers form panics.

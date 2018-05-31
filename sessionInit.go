@@ -40,7 +40,7 @@ func session(ctx *Context) {
 			return
 		}
 		cookie := httpCookie
-		cookie.Value = store.Values[cookieValueKey]
+		cookie.Value = sid
 		ctx.Data["session"] = store
 		http.SetCookie(ctx.ResponseWriter, &cookie)
 	}
