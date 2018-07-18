@@ -22,7 +22,7 @@ type Context struct {
 	ResponseWriter http.ResponseWriter
 	Request        *http.Request
 	index          int                    // Keeps the actual handler index.
-	handlersStack  *HandlersStack         // Keeps the reference to the actual handlers stack.
+	handlersStack  HandlersStack          // Keeps the reference to the actual handlers stack.
 	written        bool                   // A flag to know if the response has been written.
 	Params         Params                 // Path Value
 	Data           map[string]interface{} // Custom Data
@@ -30,19 +30,9 @@ type Context struct {
 
 // ResFormat response data
 type ResFormat struct {
-	Ok      bool
-	Data    interface{}
-	Message string
-}
-
-type resOk struct {
-	Ok   bool
-	Data interface{}
-}
-
-type resFail struct {
-	Ok      bool
-	Message string
+	Ok      bool        `json:"ok"`
+	Data    interface{} `json:"data"`
+	Message string      `json:"message"`
 }
 
 // Ok Response json
@@ -53,7 +43,7 @@ func (ctx *Context) Ok(data interface{}) {
 	}
 	ctx.written = true
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&resOk{Ok: true, Data: data})
+	b, _ := json.Marshal(&ResFormat{Ok: true, Data: data})
 	ctx.ResponseWriter.WriteHeader(http.StatusOK)
 	_, err := ctx.ResponseWriter.Write(b)
 	if err != nil {
@@ -63,6 +53,7 @@ func (ctx *Context) Ok(data interface{}) {
 
 // Fail Response fail
 func (ctx *Context) Fail(err error) {
+
 	if err == nil {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: err is nil")
 		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
@@ -70,17 +61,20 @@ func (ctx *Context) Fail(err error) {
 		return
 	}
 
-	message := err.Error()
 	if ctx.written == true {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: request has been writed")
 		return
 	}
 	ctx.written = true
-	if _, ok := err.(*ServerError); ok == true {
+	message := err.Error()
+	if Production == false {
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
+	} else if _, ok := err.(*ServerError); ok == true {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(message)
 	}
+
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&resFail{Ok: false, Message: message})
+	b, _ := json.Marshal(&ResFormat{Ok: false, Message: message})
 
 	coreErr, ok := err.(ICoreError)
 	if ok == true {
@@ -228,7 +222,7 @@ var ctxPool = sync.Pool{
 		return &Context{
 			Data:          make(map[string]interface{}),
 			index:         -1, // Begin with -1 because Next will increment the index before calling the first handler.
-			handlersStack: defaultHandlersStack,
+			handlersStack: *defaultHandlersStack,
 		}
 	},
 }
@@ -238,6 +232,7 @@ func getContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx.Request = r
 	ctx.ResponseWriter = contextWriter{w, ctx}
 	ctx.Data = make(map[string]interface{})
+	ctx.handlersStack = *defaultHandlersStack
 	return ctx
 }
 

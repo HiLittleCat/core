@@ -62,7 +62,7 @@ func (engine *Engine) handlers(ctx *Context) {
 		}
 	}
 	if found == false {
-		ctx.Fail((&NotFoundError{}).New("Not found"))
+		ctx.Fail((&NotFoundError{}).New("Url Not found"))
 	}
 }
 

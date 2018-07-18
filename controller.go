@@ -1,7 +1,13 @@
 package core
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"reflect"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 )
 
 // IController 控制器接口定义
@@ -15,13 +21,22 @@ type Controller struct {
 	Validate *Validation
 }
 
-// Register this controller to the routers
-func (c *Controller) Register() {
+// RegisterRouter this controller to the routers
+func (c *Controller) RegisterRouter() {
 }
 
 // Err return a controller error
 func (c *Controller) Err(errno int, message string) error {
 	return (&BusinessError{}).New(errno, message)
+}
+
+// GetBodyJSON return a json from body
+func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
+	var reqJSON map[string]interface{}
+	body, _ := ioutil.ReadAll(ctx.Request.Body)
+	defer ctx.Request.Body.Close()
+	json.Unmarshal(body, &reqJSON)
+	return reqJSON
 }
 
 func (c *Controller) getRValue(ctx *Context, key string) string {
@@ -33,68 +48,153 @@ func (c *Controller) getRValue(ctx *Context, key string) string {
 }
 
 // IntMin  param must be a integer, and range is [n,]
-func (c *Controller) IntMin(ctx *Context, key string, n int) int {
-	value, err := strconv.Atoi(c.getRValue(ctx, key))
-	if err != nil {
-		panic((&ValidationError{}).New("Query param '" + key + "' must be a number."))
+func (c *Controller) IntMin(fieldName string, p interface{}, n int) int {
+	value, ok := c.toNumber(p)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "必须是数字"))
 	}
 	b := c.Validate.Min(value, n)
 	if b == false {
-		panic((&ValidationError{}).New("Query param '" + key + "' minimum is " + strconv.Itoa(n)))
+		panic((&ValidationError{}).New(fieldName + "最小值为" + strconv.Itoa(n)))
 	}
 	return value
 }
 
 // IntMax  param must be a integer, and range is [,m]
-func (c *Controller) IntMax(ctx *Context, key string, m int) int {
-	value, err := strconv.Atoi(c.getRValue(ctx, key))
-	if err != nil {
-		panic((&ValidationError{}).New("Query param '" + key + "' must be a number."))
+func (c *Controller) IntMax(fieldName string, p interface{}, m int) int {
+	value, ok := c.toNumber(p)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "必须是数字."))
 	}
 	b := c.Validate.Max(value, m)
 	if b == false {
-		panic((&ValidationError{}).New("Query param '" + key + "' maximum is " + strconv.Itoa(m)))
+		panic((&ValidationError{}).New(fieldName + "最大值为" + strconv.Itoa(m)))
 	}
 	return value
 }
 
 // IntRange  param must be a integer, and range is [n, m]
-func (c *Controller) IntRange(ctx *Context, key string, n int, m int) int {
-	value, err := strconv.Atoi(c.getRValue(ctx, key))
-	if err != nil {
-		panic((&ValidationError{}).New("Query param '" + key + "' must be a number."))
+func (c *Controller) IntRange(fieldName string, p interface{}, n int, m int) int {
+	value, ok := c.toNumber(p)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "必须是数字"))
 	}
 	b := c.Validate.Range(value, n, m)
 	if b == false {
-		panic((&ValidationError{}).New("Query param '" + key + "' range is " + strconv.Itoa(n) + " to " + strconv.Itoa(m)))
+		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + strconv.Itoa(n) + " 到 " + strconv.Itoa(m)))
 	}
 	return value
 }
 
 // StrLength param is a string, length must be n
-func (c *Controller) StrLength(ctx *Context, key string, n int) string {
-	value := c.getRValue(ctx, key)
-	b := c.Validate.Length(value, n)
-	if b == false {
-		panic((&ValidationError{}).New("Query param '" + key + "' Required length is " + strconv.Itoa(n)))
+func (c *Controller) StrLength(fieldName string, p interface{}, n int) string {
+	v, ok := p.(string)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "长度应该为" + strconv.Itoa(n)))
 	}
-	return value
+	b := c.Validate.Length(v, n)
+	if b == false {
+		panic((&ValidationError{}).New(fieldName + "长度应该为" + strconv.Itoa(n)))
+	}
+	return v
 }
 
 // StrLenRange param is a string, length range is [n,m]
-func (c *Controller) StrLenRange(ctx *Context, key string, n int, m int) string {
-	value := c.getRValue(ctx, key)
-	if value == "" {
-		panic((&ValidationError{}).New("Query param '" + key + "' is required. "))
+func (c *Controller) StrLenRange(fieldName string, p interface{}, n int, m int) string {
+	v, ok := p.(string)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
 	}
-	return value
+	length := utf8.RuneCountInString(v)
+	if length > m || length < n {
+		panic((&ValidationError{}).New(fieldName + "长度应该从" + strconv.Itoa(n) + "到" + strconv.Itoa(m)))
+	}
+	return v
 }
 
-// StrGet get a string param
-func (c *Controller) StrGet(ctx *Context, key string) string {
-	value := c.getRValue(ctx, key)
-	if len(value) > 100 {
-		panic((&ValidationError{}).New("Query param '" + key + "' is too lang. "))
+// StrLenIn param is a string, length is in array
+func (c *Controller) StrLenIn(fieldName string, p interface{}, l ...int) string {
+	v, ok := p.(string)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
 	}
-	return value
+	if v == "" {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
+	}
+	length := utf8.RuneCountInString(v)
+	b := false
+	for i := 0; i < len(l); i++ {
+		if l[i] == length {
+			b = true
+		}
+	}
+	if b == false {
+		panic((&ValidationError{}).New(fieldName + "值的长度应该在" + strings.Replace(strings.Trim(fmt.Sprint(l), "[]"), " ", ",", -1) + "中"))
+	}
+	return v
+}
+
+// StrIn param is a string, the string is in array
+func (c *Controller) StrIn(fieldName string, p interface{}, l ...string) string {
+	v, ok := p.(string)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
+	}
+	if v == "" {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
+	}
+	b := false
+	for i := 0; i < len(l); i++ {
+		if l[i] == v {
+			b = true
+		}
+	}
+	if b == false {
+		panic((&ValidationError{}).New(fieldName + "值应该在" + strings.Replace(strings.Trim(fmt.Sprint(l), "[]"), " ", ",", -1) + "中"))
+	}
+	return v
+}
+
+// GetEmail check is a email
+func (c *Controller) GetEmail(fieldName string, p interface{}) string {
+	v, ok := p.(string)
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
+	}
+	b := c.Validate.Email(v)
+	if b == false {
+		panic((&ValidationError{}).New(fieldName + "格式错误"))
+	}
+	return v
+}
+
+func (c *Controller) toNumber(obj interface{}) (int, bool) {
+	var (
+		num int
+		ok  bool
+		err error
+	)
+	switch reflect.TypeOf(obj).Kind() {
+	case reflect.Float64:
+		ok = true
+		num = int(obj.(float64))
+	case reflect.Float32:
+		ok = true
+		num = int(obj.(float32))
+	case reflect.Int64:
+		ok = true
+		num = int(obj.(int64))
+	case reflect.Int:
+		ok = true
+		num = obj.(int)
+	case reflect.String:
+		str := obj.(string)
+		num, err = strconv.Atoi(str)
+		if err != nil {
+			ok = false
+		} else {
+			ok = true
+		}
+	}
+	return num, ok
 }

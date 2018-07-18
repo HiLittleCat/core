@@ -53,6 +53,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")
 	c.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
+	c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Always recover form panics.
 	defer c.Recover()
@@ -64,7 +65,6 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if c.written == false {
 		c.Fail(errors.New("not written"))
 	}
-
 	// Put the context to ctxPool
 	putContext(c)
 }
