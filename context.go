@@ -138,9 +138,8 @@ func (ctx *Context) GetSession() IStore {
 
 // SetSession set session
 func (ctx *Context) SetSession(key string, values map[string]string) error {
-	// 生成csrf token
-	//values["token"] = ctx.genToken(key)
 	sid := ctx.genSid(key)
+	values["sid"] = sid
 	store, err := provider.Set(sid, values)
 	if err != nil {
 		return err
@@ -176,8 +175,9 @@ func (ctx *Context) DeleteSession(sid string) error {
 	return nil
 }
 
-func (ctx *Context) genToken(key string) string {
-	return key
+//GetSid 获取sid
+func (ctx *Context) GetSid() string {
+	return ctx.Data["sid"].(string)
 }
 
 func (ctx *Context) genSid(key string) string {
