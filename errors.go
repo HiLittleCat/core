@@ -61,7 +61,7 @@ type BusinessError struct {
 
 // New http.StatusInternalServerError
 func (e *BusinessError) New(errno int, message string) *BusinessError {
-	e.HTTPCode = http.StatusInternalServerError
+	e.HTTPCode = http.StatusBadRequest
 	e.Errno = errno
 	e.Message = message
 	return e

@@ -53,7 +53,6 @@ func (ctx *Context) Ok(data interface{}) {
 
 // Fail Response fail
 func (ctx *Context) Fail(err error) {
-
 	if err == nil {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: err is nil")
 		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
@@ -65,16 +64,25 @@ func (ctx *Context) Fail(err error) {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: request has been writed")
 		return
 	}
+
+	// //判断错误类型，ValidationError，NotFoundError，BusinessError 返回具体的错误信息，其他类型的错误返回服务器错误
+	// _, ok := err.(*BusinessError)
+	// _, ok = err.(*NotFoundError)
+	// _, ok = err.(*BusinessError)
+	// message := http.StatusText(http.StatusInternalServerError)
+	// if ok == true {
+	// 	message = err.Error()
+	// }
+
 	ctx.written = true
-	message := err.Error()
 	if Production == false {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	} else if _, ok := err.(*ServerError); ok == true {
-		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(message)
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	}
 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&ResFormat{Ok: false, Message: message})
+	b, _ := json.Marshal(&ResFormat{Ok: false, Message: err.Error()})
 
 	coreErr, ok := err.(ICoreError)
 	if ok == true {
@@ -140,6 +148,7 @@ func (ctx *Context) GetSession() IStore {
 func (ctx *Context) SetSession(key string, values map[string]string) error {
 	sid := ctx.genSid(key)
 	values["sid"] = sid
+	ctx.Data["sid"] = sid
 	store, err := provider.Set(sid, values)
 	if err != nil {
 		return err

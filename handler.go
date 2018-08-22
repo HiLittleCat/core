@@ -54,6 +54,8 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")
 	c.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
 	c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	c.ResponseWriter.Header().Set("Access-Control-Allow-Headers", "X-Requested-With")
+	c.ResponseWriter.Header().Set("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS")
 
 	// Always recover form panics.
 	defer c.Recover()

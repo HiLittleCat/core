@@ -49,6 +49,9 @@ func (c *Controller) getRValue(ctx *Context, key string) string {
 
 // IntMin  param must be a integer, and range is [n,]
 func (c *Controller) IntMin(fieldName string, p interface{}, n int) int {
+	if p == nil {
+		p = ""
+	}
 	value, ok := c.toNumber(p)
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "必须是数字"))
@@ -62,6 +65,9 @@ func (c *Controller) IntMin(fieldName string, p interface{}, n int) int {
 
 // IntMax  param must be a integer, and range is [,m]
 func (c *Controller) IntMax(fieldName string, p interface{}, m int) int {
+	if p == nil {
+		p = ""
+	}
 	value, ok := c.toNumber(p)
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "必须是数字."))
@@ -75,7 +81,11 @@ func (c *Controller) IntMax(fieldName string, p interface{}, m int) int {
 
 // IntRange  param must be a integer, and range is [n, m]
 func (c *Controller) IntRange(fieldName string, p interface{}, n int, m int) int {
+	if p == nil {
+		p = 0
+	}
 	value, ok := c.toNumber(p)
+
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "必须是数字"))
 	}
@@ -88,6 +98,9 @@ func (c *Controller) IntRange(fieldName string, p interface{}, n int, m int) int
 
 // StrLength param is a string, length must be n
 func (c *Controller) StrLength(fieldName string, p interface{}, n int) string {
+	if p == nil {
+		p = ""
+	}
 	v, ok := p.(string)
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "长度应该为" + strconv.Itoa(n)))
@@ -101,6 +114,9 @@ func (c *Controller) StrLength(fieldName string, p interface{}, n int) string {
 
 // StrLenRange param is a string, length range is [n,m]
 func (c *Controller) StrLenRange(fieldName string, p interface{}, n int, m int) string {
+	if p == nil {
+		p = ""
+	}
 	v, ok := p.(string)
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "格式错误"))
@@ -114,11 +130,11 @@ func (c *Controller) StrLenRange(fieldName string, p interface{}, n int, m int) 
 
 // StrLenIn param is a string, length is in array
 func (c *Controller) StrLenIn(fieldName string, p interface{}, l ...int) string {
+	if p == nil {
+		p = ""
+	}
 	v, ok := p.(string)
 	if ok == false {
-		panic((&ValidationError{}).New(fieldName + "格式错误"))
-	}
-	if v == "" {
 		panic((&ValidationError{}).New(fieldName + "格式错误"))
 	}
 	length := utf8.RuneCountInString(v)
@@ -136,11 +152,11 @@ func (c *Controller) StrLenIn(fieldName string, p interface{}, l ...int) string 
 
 // StrIn param is a string, the string is in array
 func (c *Controller) StrIn(fieldName string, p interface{}, l ...string) string {
+	if p == nil {
+		p = ""
+	}
 	v, ok := p.(string)
 	if ok == false {
-		panic((&ValidationError{}).New(fieldName + "格式错误"))
-	}
-	if v == "" {
 		panic((&ValidationError{}).New(fieldName + "格式错误"))
 	}
 	b := false
@@ -157,6 +173,9 @@ func (c *Controller) StrIn(fieldName string, p interface{}, l ...string) string 
 
 // GetEmail check is a email
 func (c *Controller) GetEmail(fieldName string, p interface{}) string {
+	if p == nil {
+		p = ""
+	}
 	v, ok := p.(string)
 	if ok == false {
 		panic((&ValidationError{}).New(fieldName + "格式错误"))
