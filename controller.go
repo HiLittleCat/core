@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -35,7 +36,19 @@ func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
 	var reqJSON map[string]interface{}
 	body, _ := ioutil.ReadAll(ctx.Request.Body)
 	defer ctx.Request.Body.Close()
-	json.Unmarshal(body, &reqJSON)
+	cType := ctx.Request.Header.Get("Content-Type")
+	a := strings.Split(cType, ";")
+	if a[0] == "application/x-www-form-urlencoded" {
+		reqJSON = make(map[string]interface{})
+		reqStr := string(body)
+		reqArr := strings.Split(reqStr, "&")
+		for _, v := range reqArr {
+			param := strings.Split(v, "=")
+			reqJSON[param[0]], _ = url.QueryUnescape(param[1])
+		}
+	} else {
+		json.Unmarshal(body, &reqJSON)
+	}
 	return reqJSON
 }
 

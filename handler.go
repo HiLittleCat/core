@@ -53,7 +53,7 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 	c.ResponseWriter.Header().Set("Connection", "keep-alive")
 	c.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
-	c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+	//c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	c.ResponseWriter.Header().Set("Access-Control-Allow-Headers", "X-Requested-With")
 	c.ResponseWriter.Header().Set("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS")
 

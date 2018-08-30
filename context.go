@@ -33,6 +33,7 @@ type ResFormat struct {
 	Ok      bool        `json:"ok"`
 	Data    interface{} `json:"data"`
 	Message string      `json:"message"`
+	Errno   int         `json:"errno"`
 }
 
 // Ok Response json
@@ -74,6 +75,11 @@ func (ctx *Context) Fail(err error) {
 	// 	message = err.Error()
 	// }
 
+	errno := 0
+	errCore, ok := err.(ICoreError)
+	if ok == true {
+		errno = errCore.GetErrno()
+	}
 	ctx.written = true
 	if Production == false {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
@@ -82,7 +88,7 @@ func (ctx *Context) Fail(err error) {
 	}
 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	b, _ := json.Marshal(&ResFormat{Ok: false, Message: err.Error()})
+	b, _ := json.Marshal(&ResFormat{Ok: false, Message: err.Error(), Errno: errno})
 
 	coreErr, ok := err.(ICoreError)
 	if ok == true {
