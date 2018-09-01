@@ -109,6 +109,23 @@ func (c *Controller) IntRange(fieldName string, p interface{}, n int, m int) int
 	return value
 }
 
+// IntRangeZoom  param must be a integer, and range is [n, m], tip is zoom.
+func (c *Controller) IntRangeZoom(fieldName string, p interface{}, n int, m int, zoom int) int {
+	if p == nil {
+		p = 0
+	}
+	value, ok := c.toNumber(p)
+
+	if ok == false {
+		panic((&ValidationError{}).New(fieldName + "必须是数字"))
+	}
+	b := c.Validate.Range(value, n, m)
+	if b == false {
+		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + strconv.Itoa(n/zoom) + " 到 " + strconv.Itoa(m/zoom)))
+	}
+	return value
+}
+
 // StrLength param is a string, length must be n
 func (c *Controller) StrLength(fieldName string, p interface{}, n int) string {
 	if p == nil {
