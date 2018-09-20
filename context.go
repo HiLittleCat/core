@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -103,6 +105,22 @@ func (ctx *Context) Fail(err error) {
 	}
 }
 
+// ResFree Response json
+func (ctx *Context) ResFree(data interface{}) {
+	if ctx.written == true {
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Success: request has been writed")
+		return
+	}
+	ctx.written = true
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	b, _ := json.Marshal(data)
+	ctx.ResponseWriter.WriteHeader(http.StatusOK)
+	_, err := ctx.ResponseWriter.Write(b)
+	if err != nil {
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
+	}
+}
+
 // ResStatus Response status code, use http.StatusText to write the response.
 func (ctx *Context) ResStatus(code int) (int, error) {
 	if ctx.written == true {
@@ -153,8 +171,11 @@ func (ctx *Context) GetSession() IStore {
 // SetSession set session
 func (ctx *Context) SetSession(key string, values map[string]string) error {
 	sid := ctx.genSid(key)
-	values["sid"] = sid
-	ctx.Data["sid"] = sid
+	values["Sid"] = sid
+	ctx.Data["Sid"] = sid
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	token := ctx.genSid(key + timestamp)
+	values["Token"] = token
 	store, err := provider.Set(sid, values)
 	if err != nil {
 		return err
@@ -181,7 +202,8 @@ func (ctx *Context) FreshSession(key string) error {
 }
 
 // DeleteSession delete session
-func (ctx *Context) DeleteSession(sid string) error {
+func (ctx *Context) DeleteSession() error {
+	sid := ctx.Data["sid"].(string)
 	ctx.Data["session"] = nil
 	provider.Destroy(sid)
 	cookie := httpCookie

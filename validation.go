@@ -39,6 +39,10 @@ func (v *Validation) Range(n, min, max int) bool {
 	return v.RangeFloat(float64(n), float64(min), float64(max))
 }
 
+func (v *Validation) Range64(n, min, max int64) bool {
+	return v.RangeFloat(float64(n), float64(min), float64(max))
+}
+
 func (v *Validation) RangeFloat(n, min, max float64) bool {
 	return v.apply(Range{Min{min}, Max{max}}, n)
 }

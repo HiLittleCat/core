@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"net/http"
 )
 
@@ -64,9 +63,9 @@ func (hs *HandlersStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.Next()
 
 	// Respnose data
-	if c.written == false {
-		c.Fail(errors.New("not written"))
-	}
+	// if c.written == false {
+	// 	c.Fail(errors.New("not written"))
+	// }
 	// Put the context to ctxPool
 	putContext(c)
 }
