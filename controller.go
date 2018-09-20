@@ -33,6 +33,9 @@ func (c *Controller) Err(errno int, message string) error {
 
 // GetBodyJSON return a json from body
 func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
+	if ctx.BodyJSON != nil {
+		return ctx.BodyJSON
+	}
 	var reqJSON map[string]interface{}
 	body, _ := ioutil.ReadAll(ctx.Request.Body)
 	defer ctx.Request.Body.Close()

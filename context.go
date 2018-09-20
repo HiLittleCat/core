@@ -3,9 +3,12 @@ package core
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strconv"
 	"strings"
@@ -28,6 +31,7 @@ type Context struct {
 	written        bool                   // A flag to know if the response has been written.
 	Params         Params                 // Path Value
 	Data           map[string]interface{} // Custom Data
+	BodyJSON       map[string]interface{} // body json data
 }
 
 // ResFormat response data
@@ -168,6 +172,27 @@ func (ctx *Context) GetSession() IStore {
 	return st
 }
 
+// GetBodyJSON return a json from body
+func (ctx *Context) GetBodyJSON() {
+	var reqJSON map[string]interface{}
+	body, _ := ioutil.ReadAll(ctx.Request.Body)
+	defer ctx.Request.Body.Close()
+	cType := ctx.Request.Header.Get("Content-Type")
+	a := strings.Split(cType, ";")
+	if a[0] == "application/x-www-form-urlencoded" {
+		reqJSON = make(map[string]interface{})
+		reqStr := string(body)
+		reqArr := strings.Split(reqStr, "&")
+		for _, v := range reqArr {
+			param := strings.Split(v, "=")
+			reqJSON[param[0]], _ = url.QueryUnescape(param[1])
+		}
+	} else {
+		json.Unmarshal(body, &reqJSON)
+	}
+	ctx.BodyJSON = reqJSON
+}
+
 // SetSession set session
 func (ctx *Context) SetSession(key string, values map[string]string) error {
 	sid := ctx.genSid(key)
@@ -283,6 +308,7 @@ func putContext(ctx *Context) {
 	ctx.Request = nil
 	ctx.index = -1
 	ctx.written = false
+	ctx.BodyJSON = nil
 	ctxPool.Put(ctx)
 }
 
