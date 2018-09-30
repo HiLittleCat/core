@@ -197,7 +197,6 @@ func (ctx *Context) GetBodyJSON() {
 func (ctx *Context) SetSession(key string, values map[string]string) error {
 	sid := ctx.genSid(key)
 	values["Sid"] = sid
-	ctx.Data["Sid"] = sid
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	token := ctx.genSid(key + timestamp)
 	values["Token"] = token
@@ -228,7 +227,7 @@ func (ctx *Context) FreshSession(key string) error {
 
 // DeleteSession delete session
 func (ctx *Context) DeleteSession() error {
-	sid := ctx.Data["sid"].(string)
+	sid := ctx.Data["Sid"].(string)
 	ctx.Data["session"] = nil
 	provider.Destroy(sid)
 	cookie := httpCookie
@@ -239,7 +238,13 @@ func (ctx *Context) DeleteSession() error {
 
 //GetSid 获取sid
 func (ctx *Context) GetSid() string {
-	return ctx.Data["sid"].(string)
+	sid := ctx.Data["Sid"]
+	if sid == nil {
+		return ""
+	} else {
+		return sid.(string)
+	}
+
 }
 
 func (ctx *Context) genSid(key string) string {

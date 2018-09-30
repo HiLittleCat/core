@@ -56,7 +56,7 @@ func session(ctx *Context) {
 		cookie := httpCookie
 		cookie.Value = sid
 		ctx.Data["session"] = store
-		ctx.Data["sid"] = sid
+		ctx.Data["Sid"] = sid
 		http.SetCookie(ctx.ResponseWriter, &cookie)
 	}
 
