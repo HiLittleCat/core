@@ -39,6 +39,7 @@ func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
 	var reqJSON map[string]interface{}
 	body, _ := ioutil.ReadAll(ctx.Request.Body)
 	defer ctx.Request.Body.Close()
+
 	cType := ctx.Request.Header.Get("Content-Type")
 	a := strings.Split(cType, ";")
 	if a[0] == "application/x-www-form-urlencoded" {
@@ -52,6 +53,8 @@ func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
 	} else {
 		json.Unmarshal(body, &reqJSON)
 	}
+	fmt.Println(reqJSON)
+
 	return reqJSON
 }
 
