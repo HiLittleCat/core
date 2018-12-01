@@ -53,7 +53,6 @@ func (c *Controller) GetBodyJSON(ctx *Context) map[string]interface{} {
 	} else {
 		json.Unmarshal(body, &reqJSON)
 	}
-	fmt.Println(reqJSON)
 
 	return reqJSON
 }
