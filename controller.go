@@ -126,12 +126,12 @@ func (c *Controller) Int64Range(fieldName string, p interface{}, n int64, m int6
 	}
 	b := c.Validate.Range64(value, n, m)
 	if b == false {
-		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + string(n) + " 到 " + string(m)))
+		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + strconv.FormatInt(n, 10) + " 到 " + strconv.FormatInt(m, 10)))
 	}
 	return value
 }
 
-// IntRangeZoom  param must be a integer, and range is [n, m], tip is zoom.
+// IntRangeZoom  param must be a number, and range is [n, m], tip is zoom.
 func (c *Controller) IntRangeZoom(fieldName string, p interface{}, n int, m int, zoom int) int {
 	if p == nil {
 		p = 0
@@ -143,7 +143,9 @@ func (c *Controller) IntRangeZoom(fieldName string, p interface{}, n int, m int,
 	}
 	b := c.Validate.Range(value, n, m)
 	if b == false {
-		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + strconv.Itoa(n/zoom) + " 到 " + strconv.Itoa(m/zoom)))
+		fN := fmt.Sprintf("%.2f", float64(n)/float64(zoom))
+		fM := fmt.Sprintf("%.2f", float64(m)/float64(zoom))
+		panic((&ValidationError{}).New(fieldName + "值的范围应该从 " + fN + " 到 " + fM))
 	}
 	return value
 }
@@ -292,6 +294,37 @@ func (c *Controller) toNumber64(obj interface{}) (int64, bool) {
 	case reflect.String:
 		str := obj.(string)
 		num, err = strconv.ParseInt(str, 10, 64)
+		if err != nil {
+			ok = false
+		} else {
+			ok = true
+		}
+	}
+	return num, ok
+}
+
+func (c *Controller) toFloat64(obj interface{}) (float64, bool) {
+	var (
+		num float64
+		ok  bool
+		err error
+	)
+	switch reflect.TypeOf(obj).Kind() {
+	case reflect.Float64:
+		ok = true
+		num = obj.(float64)
+	case reflect.Float32:
+		ok = true
+		num = float64(obj.(float32))
+	case reflect.Int64:
+		ok = true
+		num = float64(obj.(int64))
+	case reflect.Int:
+		ok = true
+		num = float64(obj.(int))
+	case reflect.String:
+		str := obj.(string)
+		num, err = strconv.ParseFloat(str, 64)
 		if err != nil {
 			ok = false
 		} else {

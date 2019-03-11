@@ -1,6 +1,7 @@
 package core
 
 import (
+	"archive/zip"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -17,7 +18,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Context contains all the data needed during the serving flow, including the standard http.ResponseWriter and *http.Request.
@@ -104,6 +105,32 @@ func (ctx *Context) Fail(err error) {
 	}
 
 	_, err = ctx.ResponseWriter.Write(b)
+	if err != nil {
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
+	}
+}
+
+//ZipHandler 响应下载文件请求，返回zip文件
+func (ctx *Context) ZipHandler(fileName string, file []byte) {
+	zipName := fileName + ".zip"
+	rw := ctx.ResponseWriter
+	// 设置header信息中的ctontent-type，对于zip可选以下两种
+	// rw.Header().Set("Content-Type", "application/octet-stream")
+	rw.Header().Set("Content-Type", "application/zip")
+	// 设置header信息中的Content-Disposition为attachment类型
+	rw.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipName))
+	// 向rw中写入zip文件
+	// 创建zip.Writer
+	zipW := zip.NewWriter(rw)
+	defer zipW.Close()
+
+	// 向zip中添加文件
+	f, err := zipW.Create(fileName)
+	if err != nil {
+		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
+	}
+	// 向文件中写入文件内容
+	_, err = f.Write(file)
 	if err != nil {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	}
@@ -241,9 +268,8 @@ func (ctx *Context) GetSid() string {
 	sid := ctx.Data["Sid"]
 	if sid == nil {
 		return ""
-	} else {
-		return sid.(string)
 	}
+	return sid.(string)
 
 }
 
