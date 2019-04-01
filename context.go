@@ -53,10 +53,7 @@ func (ctx *Context) Ok(data interface{}) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(&ResFormat{Ok: true, Data: data})
 	ctx.ResponseWriter.WriteHeader(http.StatusOK)
-	_, err := ctx.ResponseWriter.Write(b)
-	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
-	}
+	ctx.ResponseWriter.Write(b)
 }
 
 // Fail Response fail
@@ -64,7 +61,7 @@ func (ctx *Context) Fail(err error) {
 	if err == nil {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: err is nil")
 		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
-		_, err = ctx.ResponseWriter.Write(nil)
+		ctx.ResponseWriter.Write(nil)
 		return
 	}
 
@@ -72,15 +69,6 @@ func (ctx *Context) Fail(err error) {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: request has been writed")
 		return
 	}
-
-	// //判断错误类型，ValidationError，NotFoundError，BusinessError 返回具体的错误信息，其他类型的错误返回服务器错误
-	// _, ok := err.(*BusinessError)
-	// _, ok = err.(*NotFoundError)
-	// _, ok = err.(*BusinessError)
-	// message := http.StatusText(http.StatusInternalServerError)
-	// if ok == true {
-	// 	message = err.Error()
-	// }
 
 	errno := 0
 	errCore, ok := err.(ICoreError)
@@ -103,11 +91,7 @@ func (ctx *Context) Fail(err error) {
 	} else {
 		ctx.ResponseWriter.WriteHeader(http.StatusInternalServerError)
 	}
-
-	_, err = ctx.ResponseWriter.Write(b)
-	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
-	}
+	ctx.ResponseWriter.Write(b)
 }
 
 //ZipHandler 响应下载文件请求，返回zip文件
@@ -130,10 +114,7 @@ func (ctx *Context) ZipHandler(fileName string, file []byte) {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
 	}
 	// 向文件中写入文件内容
-	_, err = f.Write(file)
-	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
-	}
+	f.Write(file)
 }
 
 // ResFree Response json
@@ -146,10 +127,7 @@ func (ctx *Context) ResFree(data interface{}) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	b, _ := json.Marshal(data)
 	ctx.ResponseWriter.WriteHeader(http.StatusOK)
-	_, err := ctx.ResponseWriter.Write(b)
-	if err != nil {
-		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln(err.Error())
-	}
+	ctx.ResponseWriter.Write(b)
 }
 
 // ResStatus Response status code, use http.StatusText to write the response.
