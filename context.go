@@ -43,6 +43,11 @@ type ResFormat struct {
 	Errno   int         `json:"errno"`
 }
 
+// Redirect Redirect replies to the request with a redirect to url, which may be a path relative to the request path.
+func (ctx *Context) Redirect(url string, code int) {
+	http.Redirect(ctx.ResponseWriter, ctx.Request, url, code)
+}
+
 // Ok Response json
 func (ctx *Context) Ok(data interface{}) {
 	if ctx.written == true {
@@ -60,7 +65,7 @@ func (ctx *Context) Ok(data interface{}) {
 func (ctx *Context) Fail(err error) {
 	if err == nil {
 		log.WithFields(log.Fields{"path": ctx.Request.URL.Path}).Warnln("Context.Fail: err is nil")
-		ctx.ResponseWriter.WriteHeader(err.(*ServerError).HTTPCode)
+		ctx.ResponseWriter.WriteHeader(http.StatusInternalServerError)
 		ctx.ResponseWriter.Write(nil)
 		return
 	}
