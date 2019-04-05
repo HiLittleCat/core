@@ -28,5 +28,5 @@ _testmain.go
 *.test
 ehthumbs.db
 Thumbs.db
-goSeed
 doc
+/vendor

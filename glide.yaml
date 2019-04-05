@@ -1,0 +1,14 @@
+package: github.com/HiLittleCat/core
+import:
+- package: github.com/HiLittleCat/conn
+- package: github.com/json-iterator/go
+- package: github.com/sirupsen/logrus
+- package: gopkg.in/redis.v5
+- package: gopkg.in/tylerb/graceful.v1
+- package: golang.org/x/sys
+  subpackages:
+  - unix
+- package: golang.org/x/net
+  subpackages:
+  - proxy
+  - websocket

@@ -1,0 +1,47 @@
+hash: 50061af31ffefd486b9d5566f522fc12e1aad8df13ff6edda7a2b4212016b80f
+updated: 2019-04-05T23:29:10.637706+08:00
+imports:
+- name: github.com/eclipse/paho.mqtt.golang
+  version: 36d01c2b4cbeb3d2a12063e4880ce30800af9560
+  subpackages:
+  - packets
+- name: github.com/globalsign/mgo
+  version: eeefdecb41b842af6dc652aaea4026e8403e62df
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+- name: github.com/HiLittleCat/conn
+  version: c0c7e5d51b616b6293aaceefda8695621bb6edec
+- name: github.com/json-iterator/go
+  version: 0ff49de124c6f76f8494e194af75bde0f1a49a29
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: f55edac94c9bbba5d6182a4be46d86a2c9b5b50e
+- name: github.com/modern-go/concurrent
+  version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
+- name: github.com/modern-go/reflect2
+  version: 94122c33edd36123c84d5368cfb2b69df93a0ec8
+- name: github.com/sirupsen/logrus
+  version: 717f2ccd7d4c5d1ac38e72cf234e8c04ffbc5aed
+- name: golang.org/x/net
+  version: 74de082e2cca95839e88aa0aeee5aadf6ce7710f
+  subpackages:
+  - internal/socks
+  - proxy
+  - websocket
+- name: golang.org/x/sys
+  version: baf5eb976a8cd65845293cd814ea151018552292
+  subpackages:
+  - unix
+- name: gopkg.in/redis.v5
+  version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
+- name: gopkg.in/tylerb/graceful.v1
+  version: 4654dfbb6ad53cb5e27f37d99b02e16c1872fbbb
+testImports: []
