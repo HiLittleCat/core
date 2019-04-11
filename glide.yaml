@@ -12,3 +12,5 @@ import:
   subpackages:
   - proxy
   - websocket
+- package: gopkg.in/go-playground/validator.v9
+  version: v9.28.0

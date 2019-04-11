@@ -1,5 +1,5 @@
-hash: 50061af31ffefd486b9d5566f522fc12e1aad8df13ff6edda7a2b4212016b80f
-updated: 2019-04-05T23:29:10.637706+08:00
+hash: 0644be2b21f6ef809d23c623840fc8eaf648cb3f06005caafe92ded4fc82e788
+updated: 2019-04-09T16:45:09.421874+08:00
 imports:
 - name: github.com/eclipse/paho.mqtt.golang
   version: 36d01c2b4cbeb3d2a12063e4880ce30800af9560
@@ -34,6 +34,8 @@ imports:
   version: baf5eb976a8cd65845293cd814ea151018552292
   subpackages:
   - unix
+- name: gopkg.in/go-playground/validator.v9
+  version: 46b4b1e301c24cac870ffcb4ba5c8a703d1ef475
 - name: gopkg.in/redis.v5
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
   subpackages:
