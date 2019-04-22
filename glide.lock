@@ -1,5 +1,5 @@
-hash: 0644be2b21f6ef809d23c623840fc8eaf648cb3f06005caafe92ded4fc82e788
-updated: 2019-04-09T16:45:09.421874+08:00
+hash: c123f89460bb240fd3ac69b9a6d524b59f5470712d213b9c558a8d587d2b82e8
+updated: 2019-04-12T17:33:57.19704+08:00
 imports:
 - name: github.com/eclipse/paho.mqtt.golang
   version: 36d01c2b4cbeb3d2a12063e4880ce30800af9560
@@ -12,16 +12,32 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
+- name: github.com/go-playground/locales
+  version: f63010822830b6fe52288ee52d5a1151088ce039
+  subpackages:
+  - currency
+- name: github.com/go-playground/universal-translator
+  version: 71201497bace774495daed26a3874fd339e0b538
 - name: github.com/HiLittleCat/conn
   version: c0c7e5d51b616b6293aaceefda8695621bb6edec
 - name: github.com/json-iterator/go
   version: 0ff49de124c6f76f8494e194af75bde0f1a49a29
 - name: github.com/konsorten/go-windows-terminal-sequences
   version: f55edac94c9bbba5d6182a4be46d86a2c9b5b50e
+- name: github.com/leodido/go-urn
+  version: a67a23e1c1af3c66528573bb86a87246477277c1
+- name: github.com/lestrrat/go-file-rotatelogs
+  version: d3151e2a480fdcd05fb97102f5310a47d96274c4
+- name: github.com/lestrrat/go-strftime
+  version: ba3bf9c1d0421aa146564a632931730344f1f9f1
 - name: github.com/modern-go/concurrent
   version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
 - name: github.com/modern-go/reflect2
   version: 94122c33edd36123c84d5368cfb2b69df93a0ec8
+- name: github.com/pkg/errors
+  version: 27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7
+- name: github.com/rifflock/lfshook
+  version: b9218ef580f59a2e72dad1aa33d660150445d05a
 - name: github.com/sirupsen/logrus
   version: 717f2ccd7d4c5d1ac38e72cf234e8c04ffbc5aed
 - name: golang.org/x/net

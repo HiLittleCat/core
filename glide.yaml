@@ -14,3 +14,5 @@ import:
   - websocket
 - package: gopkg.in/go-playground/validator.v9
   version: v9.28.0
+- package: github.com/lestrrat/go-file-rotatelogs
+- package: github.com/rifflock/lfshook
