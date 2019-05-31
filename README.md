@@ -1,22 +1,18 @@
-# Go服务端框架
+# Go服务端HTTP框架
 
-## 自定义数据库连接池
+- koa风格的中间件
+- 路由分组，自定义的分组和单个路由的前置和后置处理
+- 流量限制
+- 优雅重启
+- apidoc接口文档
 
-## 支持koa风格的中间件
+## 安装
 
-## 支持路由分组注册，支持自定义的分组和单个路由的前置和后置处理
-
-## 支持流量限制
-
-## 支持优雅重启
-
-## 支持apidoc接口文档
-
-### 安装apidoc包
+```sh
+$ go get -u github.com/gin-gonic/gin
 ```
-    go get github.com/caixw/apidoc
-```
-### 执行命令生成文档
-```
-    apidoc
-```
+
+
+## 使用
+ 
+[基于core的种子项目](https://github.com/HiLittleCat/goSeed)
