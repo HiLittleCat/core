@@ -6,12 +6,6 @@
 - 优雅重启
 - apidoc接口文档
 
-## 安装
-
-```sh
-$ go get -u github.com/gin-gonic/gin
-```
-
 
 ## 使用
  
